@@ -1,21 +1,41 @@
 #!/bin/bash
 
-# Длительность одной итерации в секундах
-iteration_duration=2
+source ./config.env  # Если там есть нужные переменные
 
-# Начало цикла
+# Длительность одной итерации в секундах
+iteration_duration=5
+
 while true; do
-    # Запускаем операцию с таймаутом
-    echo "Запускаю операцию с ограничением по времени..."
-    
-    # Здесь ваша операция (например, долгий процесс)
-    timeout $iteration_duration bash -c "
-        # Ваши операции, которые могут занять больше времени
-        sleep 3  # Например, эта операция займет 10 секунд
-        echo 'Операция завершена'
-    "
-    
-    # Ожидаем оставшееся время для завершения итерации
-    echo "Итерация завершена. Начинаем новую через $iteration_duration секунд."
-    sleep $iteration_duration
+  echo "Запускаю операцию с ограничением по времени..."
+
+  # Операция с таймаутом
+  timeout "$iteration_duration" bash -c "
+    echo "Я в теле цикла"
+    sleep 1  # Долгая операция, которая будет прервана через $iteration_duration секунд
+    echo "Этот текст не появится, если timeout сработает"
+    STATUS=$(curl -LI "https://test.com/monitoring/test/api" --max-time 4 -o /dev/null -w "%{http_code}" -s)
+    if pgrep "$PROCESS_NAME" > /dev/null; then
+        echo "$(date '+%Y-%m-%d %H:%M:%S') - $PROCESS_NAME работает" >>log.txt
+    else
+        echo "$(date '+%Y-%m-%d %H:%M:%S') - $PROCESS_NAME не работает" >>log.txt
+    fi
+  
+
+  echo "Итерация завершена. Жду $iteration_duration секунд до следующей итерации"
 done
+
+
+
+    # if pgrep "$PROCESS_NAME" > /dev/null; then
+    #     echo "$(date '+%Y-%m-%d %H:%M:%S') - $PROCESS_NAME работает" >>log.txt
+
+    #     STATUS=$(curl -LI "https://test.com/monitoring/test/api" -o /dev/null -w '%{http_code}' -s)
+
+    #     if [[ "${STATUS}" != "200" ]]; then
+    #         echo "$(date '+%Y-%m-%d %H:%M:%S') - URL https://test.com/monitoring/test/api недоступен, код: $STATUS" >> log.txt
+    #     fi
+    # else
+    #     echo "$(date '+%Y-%m-%d %H:%M:%S') - $PROCESS_NAME не работает" >>log.txt
+    # # fi
+
+
